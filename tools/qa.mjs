@@ -35,6 +35,12 @@ if (has('rejectplay')) {
       addEventListener('pointerdown', () => { allowed = true; }, true); addEventListener('click', () => { allowed = true; }, true);
       HTMLMediaElement.prototype.play = function () { if (!allowed) { this.pause(); const e = new DOMException('play() failed: no user gesture yet', 'NotAllowedError'); return Promise.reject(e); } return orig.call(this); }; })();` });
 }
+// Count Web Audio activity so the reel clicks can be verified without ears.
+await p.send('Page.addScriptToEvaluateOnNewDocument', { source: `
+  (() => { window.__audio = { contexts: 0, starts: 0, state: 'none' }; const AC = window.AudioContext; if (!AC) return;
+    window.AudioContext = function (...a) { const c = new AC(...a); window.__audio.contexts++; window.__audio.ctx = c; return c; };
+    window.AudioContext.prototype = AC.prototype;
+    const start = AudioBufferSourceNode.prototype.start; AudioBufferSourceNode.prototype.start = function (...a) { window.__audio.starts++; return start.apply(this, a); }; })();` });
 await p.goto(url, { settleMs: 2500 });
 
 const state = () => p.eval(() => {
@@ -81,6 +87,7 @@ for (let i = 1; i <= 6; i++) await p.send('Input.dispatchTouchEvent', { type: 't
 await p.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 await sleep(600);
 report.push('reel scrollLeft after touch drag: ' + (await p.eval(() => document.querySelector('.strip').scrollLeft)) + ' spool spin: ' + (await p.eval(() => document.querySelector('.spool').style.getPropertyValue('--spin'))));
+report.push('reel cue after drag: ' + (await p.eval(() => { const c = document.querySelector('.reel-cue'); return c ? (c.hidden ? 'hidden' : c.className) : 'none'; })) + ' | audioProbe: ' + (await p.eval(() => JSON.stringify({ contexts: window.__audio?.contexts, starts: window.__audio?.starts, state: window.__audio?.ctx?.state }))));
 await p.eval(() => document.querySelector('.strip').scrollBy({ left: 700 }));
 await sleep(900);
 await p.screenshot({ path: join(out, 'E-reel-scrolled.jpg'), quality: 70 });

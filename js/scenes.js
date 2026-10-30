@@ -13,6 +13,7 @@ export function opening(section, engine) {
   const frame = section.querySelector('.frame');
   const valley = section.querySelector('.valley');
   const dim = section.querySelector('.dim');
+  const masthead = section.querySelector('.masthead');
   let g = null;
 
   function resize() {
@@ -41,6 +42,9 @@ export function opening(section, engine) {
     set(frame, '--rail-out', easeOutCubic(clamp01((p - 0.55) / 0.35)).toFixed(3));
     set(valley, '--bg-s', (1 + 0.12 * p).toFixed(4));
     set(dim, '--bg-dim', (0.65 * e).toFixed(3));
+    const hdr = easeOutCubic(clamp01(p / 0.12));
+    set(masthead, '--hdr', hdr.toFixed(3));
+    masthead.style.visibility = hdr >= 0.999 ? 'hidden' : 'visible';
   }
 
   resize();

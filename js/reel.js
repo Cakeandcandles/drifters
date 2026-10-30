@@ -61,4 +61,60 @@ export function initReel(root, { reduced = false } = {}) {
     if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
   }, true);
   strip.addEventListener('dragstart', (e) => e.preventDefault());
+
+  // The cue above the strip goes once the visitor has pulled the strip a little, and stays gone.
+  const cue = root.querySelector('.reel-cue');
+  if (cue) {
+    const x0 = strip.scrollLeft;
+    const onFirstPull = () => {
+      if (Math.abs(strip.scrollLeft - x0) < 40) return;
+      strip.removeEventListener('scroll', onFirstPull);
+      cue.classList.add('is-gone');
+      setTimeout(() => { cue.hidden = true; }, 450);
+    };
+    strip.addEventListener('scroll', onFirstPull, { passive: true });
+  }
+
+  initReelSound(strip);
+}
+
+// Sprocket clicks while the strip is moving: a short filtered noise burst every few
+// pixels of travel, synthesised with Web Audio (no audio file). Armed by the first
+// touch, click or key on the strip, as browsers require.
+function initReelSound(strip) {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  let ctx = null, noise = null, lastX = strip.scrollLeft, travelled = 0, lastAt = 0;
+
+  function arm() {
+    if (!ctx) {
+      try { ctx = new AC(); } catch { return; }
+      const len = Math.ceil(ctx.sampleRate * 0.03);
+      noise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    }
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }
+  for (const ev of ['pointerdown', 'touchend', 'keydown', 'click']) strip.addEventListener(ev, arm, { passive: true });
+
+  function click(strength) {
+    const src = ctx.createBufferSource(); src.buffer = noise;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1600 + Math.random() * 1600; bp.Q.value = 1.4;
+    const g = ctx.createGain(); g.gain.value = 0.05 + 0.07 * strength;
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+    src.start();
+  }
+
+  strip.addEventListener('scroll', () => {
+    const x = strip.scrollLeft;
+    const dx = Math.abs(x - lastX); lastX = x;
+    if (!ctx || ctx.state !== 'running' || document.hidden) return;
+    travelled += dx;
+    const now = performance.now();
+    if (travelled >= 26 && now - lastAt >= 30) {
+      travelled = 0; lastAt = now;
+      click(Math.min(1, dx / 60));
+    }
+  }, { passive: true });
 }
