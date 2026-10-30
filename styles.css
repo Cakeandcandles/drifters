@@ -1,0 +1,373 @@
+/* Drifters & Co. — one green room, lit by tape and film. */
+
+@font-face {
+  font-family: 'Rammetto One';
+  src: url('./fonts/RammettoOne.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Archivo';
+  src: url('./fonts/ArchivoVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+:root {
+  --ground: #193b29;
+  --ground-deep: #0f2a1d;
+  --ink: #f3ead8;
+  --accent: #bd2f13;
+  --font-display: 'Rammetto One', 'Arial Rounded MT Bold', 'Arial Black', sans-serif;
+  --font-text: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --m: 16px;
+  --vh: 100vh;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --sprockets: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Crect x='5' y='7' width='12' height='8' rx='2' fill='%230f2a1d'/%3E%3C/svg%3E");
+}
+@supports (height: 100lvh) { :root { --vh: 100lvh; } }
+@media (min-width: 720px) { :root { --m: 32px; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html {
+  background: var(--ground);
+  color: var(--ink);
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto;
+}
+html.window-open { overflow: hidden; }
+body {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.5;
+  background: var(--ground);
+  color: var(--ink);
+}
+img, video, svg { display: block; max-width: 100%; }
+video { object-fit: cover; background: var(--ground-deep); }
+button { font: inherit; color: inherit; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* The grain over everything. One tile, no filters. */
+.grain {
+  position: fixed; inset: 0; z-index: 40;
+  background: url('./media/grain.png') repeat;
+  background-size: 256px 256px;
+  opacity: .07;
+  pointer-events: none;
+}
+
+/* ---------- Scenes: a sticky stage inside a tall section ---------- */
+.scene { position: relative; }
+.scene > .stage {
+  position: sticky; top: 0;
+  height: var(--vh);
+  overflow: hidden;
+}
+.js .scene.is-live { height: calc(var(--vh) * (1 + var(--hold))); }
+
+.play-fallback {
+  position: absolute; left: 50%; top: 50%; z-index: 5;
+  width: 64px; height: 64px; margin: -32px 0 0 -32px;
+  border: 0; border-radius: 50%;
+  background: var(--ink); color: var(--ground);
+  display: grid; place-items: center;
+  cursor: pointer;
+}
+.play-fallback svg { margin-left: 3px; }
+.play-fallback[hidden] { display: none; }
+
+/* ---------- Scene A/B: the opening frame ---------- */
+.masthead {
+  position: absolute; z-index: 3;
+  top: max(var(--m), env(safe-area-inset-top));
+  left: max(var(--m), env(safe-area-inset-left));
+}
+.wordmark { margin: 0; }
+.wordmark img { width: clamp(76px, 21vw, 112px); height: auto; }
+
+.opening .valley {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 42% 58%;
+  transform: scale(var(--bg-s, 1));
+  transform-origin: 50% 60%;
+}
+.opening .dim {
+  position: absolute; inset: 0;
+  background: var(--ground-deep);
+  opacity: var(--bg-dim, 0);
+}
+/* Rest composition: one 35mm frame, low right, slightly askew. */
+.opening .frame {
+  position: absolute;
+  right: max(var(--m), env(safe-area-inset-right));
+  bottom: calc(9svh + env(safe-area-inset-bottom));
+  width: min(70vw, calc(var(--frame-h, 56svh) * 9 / 16));
+  aspect-ratio: 9 / 16;
+  transform: rotate(-3deg);
+  transform-origin: 50% 50%;
+  z-index: 2;
+}
+.opening .frame-clip { position: absolute; inset: 0; background: var(--ink); }
+.opening .frame-clip video {
+  position: absolute; left: 0; right: 0; top: 7%; height: 86%; width: 100%;
+  object-position: 50% 45%;
+}
+.rail {
+  position: absolute; left: 0; right: 0; height: 7%;
+  background: var(--ink) var(--sprockets) repeat-x 0 50%;
+  background-size: auto 100%;
+}
+.rail-top { top: 0; }
+.rail-bottom { bottom: 0; }
+/* Live geometry: the frame is the whole stage, transformed and clipped by the engine. */
+.js .opening.is-live .frame {
+  inset: 0; width: auto; aspect-ratio: auto;
+  transform: translate(var(--tx, 0px), var(--ty, 0px)) rotate(var(--r, 0deg)) scale(var(--s, 1));
+  will-change: transform;
+}
+.js .opening.is-live .frame-clip {
+  clip-path: inset(var(--ct, 0px) var(--cl, 0px) var(--ct, 0px) var(--cl, 0px));
+  background: transparent;
+}
+.js .opening.is-live .frame-clip video {
+  top: 0; height: 100%;
+}
+.js .opening.is-live .rail {
+  left: var(--cl, 0px); right: var(--cl, 0px); height: var(--rail, 0px);
+}
+.js .opening.is-live .rail-top { top: var(--ct, 0px); transform: translateY(calc(var(--rail-out, 0) * -110%)); }
+.js .opening.is-live .rail-bottom { bottom: var(--ct, 0px); transform: translateY(calc(var(--rail-out, 0) * 110%)); }
+
+/* ---------- Scene C: a breath ---------- */
+.breath {
+  position: relative;
+  padding: 16svh var(--m) 12svh;
+  background: var(--ground);
+  overflow: clip;
+}
+.breath .tagline { width: min(84vw, 560px); height: auto; }
+.breath .print {
+  width: min(80vw, 560px);
+  margin: 7svh calc(-1 * (var(--m) + 14vw)) 0 auto;
+}
+.breath .print img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+@media (min-aspect-ratio: 4/5) {
+  .opening .frame { --frame-h: 62svh; }
+  .breath { display: grid; grid-template-columns: 1fr 1fr; align-items: center; column-gap: var(--m); padding-block: 18svh; }
+  .breath .tagline { width: min(44vw, 640px); }
+  .breath .print { width: min(46vw, 720px); margin: 0 calc(-1 * var(--m)) 0 auto; }
+}
+.js .rise { opacity: 0; transform: translateY(24px); }
+.js .rise.in {
+  opacity: 1; transform: none;
+  transition: opacity .8s var(--ease-out), transform .8s var(--ease-out);
+}
+.js .rise.in:nth-child(2) { transition-delay: 90ms; }
+
+/* ---------- Scene D: three tapes ---------- */
+.tapes .stage { background: var(--ground-deep); }
+.tape-layer {
+  position: absolute; inset: 0;
+  visibility: hidden;
+  transform: translate(var(--x, 0%), var(--y, 0px)) scale(var(--sc, 1));
+  clip-path: var(--clip, none);
+  opacity: var(--op, 1);
+}
+.tape-layer.is-on { visibility: visible; }
+.tape-layer video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-position: var(--pos, 50% 50%);
+}
+.tape-layer .dimmer {
+  position: absolute; inset: 0;
+  background: var(--ground-deep);
+  opacity: var(--dim, 0);
+}
+/* Wide screens: the tape is a tall lit window on the dark ground. */
+@media (min-aspect-ratio: 4/5) {
+  .tape-layer { left: 0; right: 0; width: calc(var(--vh) * 9 / 16); margin-inline: auto; }
+}
+/* Rest: the three tapes stacked, each a screen tall. */
+.tapes:not(.is-live) .stage { position: static; height: auto; overflow: visible; }
+.tapes:not(.is-live) .tape-layer { position: relative; height: var(--vh); visibility: visible; }
+
+/* ---------- Scene E: the film roll ---------- */
+.reel {
+  position: relative;
+  padding: 16svh 0 14svh;
+  background: var(--ground-deep);
+  overflow: clip;
+  --fh: min(56svh, 520px);
+}
+.spool {
+  position: absolute; left: -27vw; top: 50%;
+  width: 54vw; max-width: 420px;
+  color: var(--ink);
+  transform: translateY(-50%) rotate(var(--spin, 0rad));
+  will-change: transform;
+  z-index: 2;
+  pointer-events: none;
+}
+@media (min-width: 720px) { .spool { left: -210px; } }
+.spool svg { width: 100%; height: auto; }
+.strip {
+  position: relative;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 29vw;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+  padding: 10px 0 10px 29vw;
+  cursor: grab;
+}
+@media (min-width: 720px) { .strip { padding-left: 230px; scroll-padding-left: 230px; } }
+.strip.dragging { cursor: grabbing; scroll-snap-type: none; }
+.strip::-webkit-scrollbar { display: none; }
+.film {
+  display: flex; align-items: stretch;
+  width: max-content;
+  margin: 0; padding: 22px 48vw 22px 6px;
+  list-style: none;
+  background: var(--ink) var(--sprockets) repeat-x 0 0;
+  background-size: 22px 22px;
+  position: relative;
+}
+.film::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 22px;
+  background: var(--sprockets) repeat-x 0 0; background-size: 22px 22px;
+}
+.fr {
+  flex: none;
+  padding: 0 5px;
+  scroll-snap-align: start;
+  transform: rotate(var(--tilt, 0deg)) translateY(var(--lift, 0px));
+}
+.fr button {
+  display: block;
+  width: calc(var(--fh) * var(--ar, .75)); height: var(--fh);
+  padding: 0; border: 0;
+  background: var(--ground-deep);
+  cursor: pointer;
+}
+.fr img { width: 100%; height: 100%; object-fit: cover; }
+.fr button:active img { opacity: .85; }
+
+/* ---------- Scene F: the closing announcement ---------- */
+.closing .stage { background: var(--ground); }
+.closing-photo {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 22%;
+}
+.sheet {
+  position: absolute; left: -12%; right: -12%; bottom: -30%; height: 80%;
+  background: var(--ground);
+  transform: translateY(var(--sy, 0%)) rotate(var(--sr, 0deg));
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+.messages {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
+  overflow: hidden;
+  transform: translateY(var(--sy, 0%));
+}
+.msg {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  margin: 0;
+  padding: 0 max(var(--m), env(safe-area-inset-right)) 0 max(var(--m), env(safe-area-inset-left));
+  transform: translateY(var(--my, 0%));
+  opacity: var(--mo, 1);
+  will-change: transform, opacity;
+}
+.msg .t { display: block; text-wrap: balance; }
+.msg-1 .t {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(2.5rem, 12.5vw, 7rem);
+  line-height: .95; letter-spacing: -.01em;
+}
+.msg-2 .t {
+  font-weight: 760; font-stretch: 112%;
+  font-size: clamp(1.6rem, 7.4vw, 4rem);
+  line-height: 1.0; letter-spacing: -.025em;
+  max-width: 23ch;
+}
+.msg-3 .t {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(3.6rem, 19vw, 11rem);
+  line-height: .9; letter-spacing: -.01em;
+}
+@media (min-aspect-ratio: 4/5) {
+  .closing-photo { object-position: 50% 60%; }
+  .msg-1 .t { font-size: clamp(3rem, 8vw, 7rem); }
+  .msg-2 .t { font-size: clamp(2rem, 4.4vw, 4rem); max-width: 30ch; }
+  .msg-3 .t { font-size: clamp(5rem, 14vw, 12rem); }
+}
+/* Rest: photograph above, the green half with the three messages stacked. */
+.closing:not(.is-live) .stage { position: static; height: auto; overflow: visible; }
+.closing:not(.is-live) .closing-photo { position: relative; height: 50svh; }
+.closing:not(.is-live) .sheet { display: none; }
+.closing:not(.is-live) .messages { position: relative; height: auto; transform: none; padding: 10svh 0 6svh; display: grid; gap: 7svh; }
+.closing:not(.is-live) .msg { position: relative; inset: auto; transform: none; opacity: 1; }
+
+/* ---------- The trailer ---------- */
+.trailer {
+  padding: 10svh 0 6svh;
+  background: var(--ground);
+}
+@media (min-width: 720px) { .trailer { padding-inline: var(--m); } }
+.trailer-frame { position: relative; max-width: 1280px; margin: 0 auto; }
+.trailer video { width: 100%; height: auto; aspect-ratio: 16 / 9; }
+
+/* ---------- Footer ---------- */
+.colophon {
+  padding: 8svh var(--m) calc(40px + env(safe-area-inset-bottom));
+  background: var(--ground);
+}
+.colophon img { width: min(100%, 440px); height: auto; margin: 0 auto; }
+.colophon p { margin: 36px 0 0; text-align: center; font-size: 16px; font-weight: 500; }
+
+/* ---------- The photograph window ---------- */
+.window {
+  border: 0; padding: 0; margin: 0;
+  width: 100vw; height: 100dvh; max-width: none; max-height: none;
+  background: transparent; color: var(--ink);
+  overscroll-behavior: contain;
+}
+.window[open] { display: grid; place-items: center; }
+.window::backdrop { background: rgb(15 42 29 / .9); }
+.window-figure { margin: 0; }
+.window img {
+  --ar: 1;
+  aspect-ratio: var(--ar);
+  width: min(94vw, calc(84dvh * var(--ar)));
+  height: auto; max-height: 84dvh;
+  background: var(--ground-deep);
+  object-fit: contain;
+}
+.window-close {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 48px; height: 48px;
+  border: 0; border-radius: 50%;
+  background: var(--accent); color: var(--ink);
+  display: grid; place-items: center;
+  cursor: pointer;
+}
+
+/* ---------- Reduced motion: the rest compositions, nothing travels ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .js .rise { opacity: 1; transform: none; transition: none; }
+  .spool { transform: translateY(-50%); }
+  .fr { transform: none; }
+  .js .rise.in { transition: none; }
+}
