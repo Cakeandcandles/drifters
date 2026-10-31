@@ -93,9 +93,9 @@ export function tapes(section, engine, videos) {
   function update(p) {
     let key, live;
     if (p < T0) { plain(0); off(1); off(2); live = [0]; }
-    else if (p < T1) { transition(0, 1, (p - T0) / (T1 - T0), 1); off(2); live = [0, 1]; }
+    else if (p < T1) { transition(0, 1, (p - T0) / (T1 - T0), 1); off(2); live = [1]; }
     else if (p < T2) { off(0); plain(1); off(2); live = [1]; }
-    else if (p < T3) { off(0); transition(1, 2, (p - T2) / (T3 - T2), -1); live = [1, 2]; }
+    else if (p < T3) { off(0); transition(1, 2, (p - T2) / (T3 - T2), -1); live = [2]; }
     else { off(0); off(1); plain(2); live = [2]; }
     key = live.join('+');
     if (near && key !== lastKey) {

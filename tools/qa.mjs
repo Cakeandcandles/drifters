@@ -100,7 +100,7 @@ const loop = await p.eval(async () => {
 });
 report.push('loop: ' + JSON.stringify(loop));
 await p.screenshot({ path: join(out, 'E-reel-looped.jpg'), quality: 70 });
-report.push('collage layers transform: ' + (await p.eval(() => [...document.querySelectorAll('.collage-layer')].map((l) => l.style.transform || 'none').join(' | '))));
+
 await p.eval(() => document.querySelector('.strip').scrollBy({ left: 700 }));
 await sleep(900);
 await p.screenshot({ path: join(out, 'E-reel-scrolled.jpg'), quality: 70 });

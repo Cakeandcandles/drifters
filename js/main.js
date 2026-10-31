@@ -3,7 +3,6 @@ import { opening, tapes, closing } from './scenes.js';
 import { createVideoManager } from './video.js';
 import { initReel } from './reel.js';
 import { initLightbox } from './lightbox.js';
-import { initCollages } from './collage.js';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const videos = createVideoManager({ autoplay: !reduced });
@@ -11,7 +10,6 @@ const videos = createVideoManager({ autoplay: !reduced });
 const reel = document.querySelector('.reel');
 initReel(reel, { reduced });
 initLightbox(reel);
-if (!reduced) initCollages();
 
 const driven = new Set();
 if (!reduced) {

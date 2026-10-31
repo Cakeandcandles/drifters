@@ -56,14 +56,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-/* The grain over everything. One tile, no filters. */
-.grain {
-  position: fixed; inset: 0; z-index: 40;
-  background: url('./media/grain.png') repeat;
-  background-size: 256px 256px;
-  opacity: .07;
-  pointer-events: none;
-}
+/* Grain lives on the static green sections only, as a plain background tile; nothing is blended
+   over the videos while they play. */
+.grainy { background-image: url('./media/grain-soft.png'); background-repeat: repeat; background-size: 256px 256px; }
 
 /* ---------- Scenes: a sticky stage inside a tall section ---------- */
 .scene { position: relative; }
@@ -169,7 +164,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .breath {
   position: relative;
   padding: 16svh var(--m) 12svh;
-  background: var(--ground);
+  background-color: var(--ground);
   overflow: clip;
 }
 .breath .tagline { width: min(84vw, 560px); height: auto; }
@@ -243,7 +238,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   pointer-events: none;
   --k: 1;
 }
-.collage-layer { position: absolute; inset: 0; will-change: transform; }
+.collage-layer { position: absolute; inset: 0; }
 .pc {
   position: absolute;
   left: var(--x); top: var(--y);
@@ -268,7 +263,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .reel {
   position: relative;
   padding: 20svh 0 24svh;
-  background: var(--ground-deep);
+  background-color: var(--ground-deep);
   overflow: clip;
   --fh: min(56svh, 520px);
 }
@@ -351,7 +346,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 }
 .sheet {
   position: absolute; left: -12%; right: -12%; bottom: -30%; height: 80%;
-  background: var(--ground);
+  background: var(--ground) url('./media/grain-soft.png') repeat;
+  background-size: 256px 256px;
   transform: translateY(var(--sy, 0%)) rotate(var(--sr, 0deg));
   transform-origin: 50% 100%;
   will-change: transform;
@@ -404,7 +400,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .trailer {
   position: relative;
   padding: 15svh 0 13svh;
-  background: var(--ground);
+  background-color: var(--ground);
   overflow: clip;
 }
 @media (min-width: 720px) { .trailer { padding-inline: var(--m); } }
@@ -414,7 +410,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 /* ---------- Footer ---------- */
 .colophon {
   padding: 8svh var(--m) calc(40px + env(safe-area-inset-bottom));
-  background: var(--ground);
+  background-color: var(--ground);
 }
 .colophon img { width: min(100%, 440px); height: auto; margin: 0 auto; }
 .colophon p { margin: 36px 0 0; text-align: center; font-size: 16px; font-weight: 500; }
