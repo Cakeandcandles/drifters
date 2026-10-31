@@ -74,3 +74,92 @@ for y in range(256):
 g.save(os.path.join(ROOT, 'media', 'grain.png'), optimize=True)
 tot = sum(os.path.getsize(os.path.join(OUT, f)) for f in os.listdir(OUT))
 print(f'{len(manifest)} photos, roll folder {tot/1e6:.1f} MB')
+
+
+# ---------------------------------------------------------------------------
+# Background postcards from Drifters/more-attachments: soft, warm, faded derivatives
+# (blur and grade are baked in so the page never runs a filter), plus a deterministic
+# scatter that is written into index.html between the collage markers.
+from PIL import ImageFilter, ImageEnhance
+import random as _random
+MORE = os.path.join(ROOT, 'Drifters', 'more-attachments')
+BG = os.path.join(ROOT, 'media', 'bg')
+os.makedirs(BG, exist_ok=True)
+# (file, slug, area) — area 'reel' = the Moments section, 'trailer' = above the footer
+MORE_ROLL = [
+ ('IMG_2047.jpeg',        'road-selfie',   'reel'),
+ ('DSC06554.jpeg',        'crew-woods',    'reel'),
+ ('IMG_2237.jpeg',        'pine-branch',   'reel'),
+ ('IMG_2286.jpeg',        'paraglide',     'reel'),
+ ('image 0004.jpeg',      'flag-road',     'reel'),
+ ('image 0009.jpeg',      'canyon-creek',  'reel'),
+ ('IMG_2079.jpeg',        'rain-ponchos',  'reel'),
+ ('IMG_2295.jpeg',        'van-selfie',    'reel'),
+ ('20260705_160122.jpg',  'horse',         'trailer'),
+ ('IMG_2179.jpeg',        'geyser',        'trailer'),
+ ('image 0000.jpeg',      'palms',         'trailer'),
+ ('DSC06558.jpeg',        'crew-woods-2',  'trailer'),
+]
+bg = []
+for i, (fn, slug, area) in enumerate(MORE_ROLL, 1):
+    im = ImageOps.exif_transpose(Image.open(os.path.join(MORE, fn))).convert('RGB')
+    im.thumbnail((560, 560), Image.LANCZOS)
+    im = im.filter(ImageFilter.GaussianBlur(radius=max(im.size) * 0.011))
+    im = ImageEnhance.Color(im).enhance(0.82)
+    im = ImageEnhance.Contrast(im).enhance(0.86)
+    im = ImageEnhance.Brightness(im).enhance(1.04)
+    warm = Image.new('RGB', im.size, (217, 185, 138))
+    im = Image.blend(im, warm, 0.16)
+    im = im.point(lambda v: int(v * 0.9 + 22))  # lifted blacks, like a faded print
+    name = f'{i:02d}-{slug}.webp'
+    im.save(os.path.join(BG, name), 'WEBP', quality=72, method=6)
+    bg.append({'src': f'media/bg/{name}', 'w': im.width, 'h': im.height, 'area': area})
+with open(os.path.join(BG, 'manifest.json'), 'w') as f:
+    json.dump(bg, f, indent=0)
+
+# Scatter: a loose grid with seeded jitter; --x/--y/--w are percentages of the section box,
+# --r the tilt. Cards may bleed past the edges; neighbours are nudged together so some overlap.
+def scatter(cards, bands, seed, wr=(34, 50)):
+    """bands: list of (y_min, y_max, count). Cards are spread across x within each band with
+    seeded jitter; neighbours land close enough to overlap here and there."""
+    rnd = _random.Random(seed)
+    out = []; k = 0
+    for (y0, y1, count) in bands:
+        slots = list(range(count)); rnd.shuffle(slots)
+        for slot in slots:
+            if k >= len(cards): break
+            card = cards[k]; k += 1
+            x = -8 + (84 / count) * (slot + 0.5 + rnd.uniform(-0.38, 0.38))
+            y = rnd.uniform(y0, y1)
+            w = rnd.uniform(*wr) * (0.82 if card['w'] < card['h'] else 1.0)
+            out.append({**card, 'x': round(x, 1), 'y': round(y, 1), 'w': round(w, 1), 'r': round(rnd.uniform(-14, 14), 1), 'layer': 'near' if k % 2 else 'far'})
+    return out
+
+def markup(cards, indent='      '):
+    far = [c for c in cards if c['layer'] == 'far']; near = [c for c in cards if c['layer'] == 'near']
+    def one(c):
+        return (f'{indent}    <div class="pc" style="--x:{c["x"]}%;--y:{c["y"]}%;--w:{c["w"]}%;--r:{c["r"]}deg">'
+                f'<img src="./{c["src"]}" width="{c["w" if False else "w"]}" height="{c["h"]}" alt="" loading="lazy" decoding="async"></div>')
+    lines = [f'{indent}<div class="collage" aria-hidden="true">', f'{indent}  <div class="collage-layer far">']
+    lines += [one(c) for c in far]
+    lines += [f'{indent}  </div>', f'{indent}  <div class="collage-layer near">']
+    lines += [one(c) for c in near]
+    lines += [f'{indent}  </div>', f'{indent}</div>']
+    return '\n'.join(lines)
+
+# The strip covers the middle of the Moments section and the video the middle of the trailer
+# section, so the cards live in the bands above and below, where they can be seen.
+reel_cards = scatter([c for c in bg if c['area'] == 'reel'], bands=[(-6, 7, 4), (79, 89, 4)], seed=11, wr=(40, 58))
+trailer_cards = scatter([c for c in bg if c['area'] == 'trailer'], bands=[(-12, 3, 2), (66, 82, 2)], seed=5, wr=(42, 60))
+html_path = os.path.join(ROOT, 'index.html')
+import re as _re
+html = open(html_path).read()
+for key, cards in (('reel', reel_cards), ('trailer', trailer_cards)):
+    block = f'<!-- collage:{key} -->\n{markup(cards, "    ")}\n    <!-- /collage:{key} -->'
+    if f'<!-- collage:{key} -->' in html:
+        html = _re.sub(rf'<!-- collage:{key} -->.*?<!-- /collage:{key} -->', block, html, flags=_re.S)
+    else:
+        anchor = '<section class="reel" aria-label="The film roll">\n' if key == 'reel' else '<section class="trailer" aria-label="This summer, on tape">\n'
+        html = html.replace(anchor, anchor + '    ' + block + '\n')
+open(html_path, 'w').write(html)
+print(f'{len(bg)} background postcards; collage markup written into index.html')

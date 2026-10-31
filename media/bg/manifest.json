@@ -1,0 +1,74 @@
+[
+{
+"src": "media/bg/01-road-selfie.webp",
+"w": 560,
+"h": 420,
+"area": "reel"
+},
+{
+"src": "media/bg/02-crew-woods.webp",
+"w": 560,
+"h": 373,
+"area": "reel"
+},
+{
+"src": "media/bg/03-pine-branch.webp",
+"w": 420,
+"h": 560,
+"area": "reel"
+},
+{
+"src": "media/bg/04-paraglide.webp",
+"w": 420,
+"h": 560,
+"area": "reel"
+},
+{
+"src": "media/bg/05-flag-road.webp",
+"w": 560,
+"h": 373,
+"area": "reel"
+},
+{
+"src": "media/bg/06-canyon-creek.webp",
+"w": 420,
+"h": 560,
+"area": "reel"
+},
+{
+"src": "media/bg/07-rain-ponchos.webp",
+"w": 560,
+"h": 420,
+"area": "reel"
+},
+{
+"src": "media/bg/08-van-selfie.webp",
+"w": 420,
+"h": 560,
+"area": "reel"
+},
+{
+"src": "media/bg/09-horse.webp",
+"w": 420,
+"h": 560,
+"area": "trailer"
+},
+{
+"src": "media/bg/10-geyser.webp",
+"w": 560,
+"h": 420,
+"area": "trailer"
+},
+{
+"src": "media/bg/11-palms.webp",
+"w": 560,
+"h": 420,
+"area": "trailer"
+},
+{
+"src": "media/bg/12-crew-woods-2.webp",
+"w": 560,
+"h": 374,
+"area": "trailer"
+}
+]

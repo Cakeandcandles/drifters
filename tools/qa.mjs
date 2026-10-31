@@ -35,12 +35,6 @@ if (has('rejectplay')) {
       addEventListener('pointerdown', () => { allowed = true; }, true); addEventListener('click', () => { allowed = true; }, true);
       HTMLMediaElement.prototype.play = function () { if (!allowed) { this.pause(); const e = new DOMException('play() failed: no user gesture yet', 'NotAllowedError'); return Promise.reject(e); } return orig.call(this); }; })();` });
 }
-// Count Web Audio activity so the reel clicks can be verified without ears.
-await p.send('Page.addScriptToEvaluateOnNewDocument', { source: `
-  (() => { window.__audio = { contexts: 0, starts: 0, state: 'none' }; const AC = window.AudioContext; if (!AC) return;
-    window.AudioContext = function (...a) { const c = new AC(...a); window.__audio.contexts++; window.__audio.ctx = c; return c; };
-    window.AudioContext.prototype = AC.prototype;
-    const start = AudioBufferSourceNode.prototype.start; AudioBufferSourceNode.prototype.start = function (...a) { window.__audio.starts++; return start.apply(this, a); }; })();` });
 await p.goto(url, { settleMs: 2500 });
 
 const state = () => p.eval(() => {
@@ -87,7 +81,26 @@ for (let i = 1; i <= 6; i++) await p.send('Input.dispatchTouchEvent', { type: 't
 await p.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 await sleep(600);
 report.push('reel scrollLeft after touch drag: ' + (await p.eval(() => document.querySelector('.strip').scrollLeft)) + ' spool spin: ' + (await p.eval(() => document.querySelector('.spool').style.getPropertyValue('--spin'))));
-report.push('reel cue after drag: ' + (await p.eval(() => { const c = document.querySelector('.reel-cue'); return c ? (c.hidden ? 'hidden' : c.className) : 'none'; })) + ' | audioProbe: ' + (await p.eval(() => JSON.stringify({ contexts: window.__audio?.contexts, starts: window.__audio?.starts, state: window.__audio?.ctx?.state }))));
+report.push('reel cue after drag: ' + (await p.eval(() => { const c = document.querySelector('.reel-cue'); return c ? (c.hidden ? 'hidden' : c.className) : 'none'; })));
+// Infinite loop: fling most of a copy forward, rest, and confirm we are back inside the middle copy
+// with the same frame under the left edge as before the silent jump.
+const loop = await p.eval(async () => {
+  const strip = document.querySelector('.strip'), film = document.querySelector('.film');
+  const n = film.children.length / 3, W = film.children[2 * n].offsetLeft - film.children[n].offsetLeft;
+  const firstVisible = () => { const L = strip.getBoundingClientRect().left + parseFloat(getComputedStyle(strip).paddingLeft); for (const f of film.children) { if (f.getBoundingClientRect().right > L + 4) return f.querySelector('button').dataset.large.split('/').pop(); } };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1800); // let any momentum from the synthesised fling settle
+  const out = { W, n, startLeft: strip.scrollLeft };
+  strip.scrollLeft += W * 0.92; await wait(500); out.afterFling = strip.scrollLeft; out.inMiddle = strip.scrollLeft >= W * 0.5 && strip.scrollLeft <= W * 1.5;
+  const before = firstVisible(); strip.scrollLeft += W; await wait(50); const after = firstVisible(); strip.scrollLeft -= W; await wait(400);
+  out.sameFrameAfterJump = before === after; out.frame = before; out.restLeft = strip.scrollLeft;
+  strip.scrollLeft -= W * 1.3; await wait(500); out.afterBackFling = strip.scrollLeft; out.inMiddleAfterBack = strip.scrollLeft >= W * 0.5 && strip.scrollLeft <= W * 1.5;
+  out.clones = film.querySelectorAll('.is-clone[aria-hidden="true"]').length; out.tabbableClones = film.querySelectorAll('.is-clone button:not([tabindex="-1"])').length;
+  return out;
+});
+report.push('loop: ' + JSON.stringify(loop));
+await p.screenshot({ path: join(out, 'E-reel-looped.jpg'), quality: 70 });
+report.push('collage layers transform: ' + (await p.eval(() => [...document.querySelectorAll('.collage-layer')].map((l) => l.style.transform || 'none').join(' | '))));
 await p.eval(() => document.querySelector('.strip').scrollBy({ left: 700 }));
 await sleep(900);
 await p.screenshot({ path: join(out, 'E-reel-scrolled.jpg'), quality: 70 });
