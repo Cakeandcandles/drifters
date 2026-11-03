@@ -114,32 +114,49 @@ export function tapes(section, engine, videos) {
   });
 }
 
-/* Scene F: a sheet of green rises to the half line, then three messages take turns. */
-export function closing(section, engine) {
+/* The announcement: the first line squeezes together, pops, and is flung off the screen;
+   the second line's words tumble in one by one and land with a bounce. */
+const easeInQuad = (t) => t * t;
+const easeOutBack = (t) => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);
+
+export function announce(section, engine) {
   const stage = section.querySelector('.stage');
-  const sheet = section.querySelector('.sheet');
-  const messages = section.querySelector('.messages');
-  const msgs = [...section.querySelectorAll('.msg')];
-  // in-start, in-end, out-start, out-end
-  const seg = [[0.24, 0.32, 0.46, 0.54], [0.54, 0.62, 0.74, 0.82], [0.82, 0.90, 1.5, 1.6]];
+  const a = section.querySelector('.msg-a .t');
+  const b = section.querySelector('.msg-b');
+  const words = [...b.querySelectorAll('.w')];
 
   function update(p) {
-    const rise = easeOutCubic(clamp01(p / 0.22));
-    const sy = (100 * (1 - rise)).toFixed(2) + '%';
-    set(sheet, '--sy', sy);
-    set(sheet, '--sr', (1.5 * (1 - rise)).toFixed(2) + 'deg');
-    set(messages, '--sy', sy);
-    msgs.forEach((el, i) => {
-      const [a, b, c, d] = seg[i];
-      let y = 70, o = 0;
-      if (p < a) { y = 70; o = 0; }
-      else if (p < b) { const u = easeOutQuint((p - a) / (b - a)); y = 70 * (1 - u); o = u; }
-      else if (p < c) { y = 0; o = 1; }
-      else if (p < d) { const u = easeInQuint((p - c) / (d - c)); y = -70 * u; o = 1 - u; }
-      else { y = -70; o = 0; }
-      set(el, '--my', y.toFixed(2) + '%');
-      set(el, '--mo', o.toFixed(3));
-      el.style.visibility = o > 0.001 ? 'visible' : 'hidden';
+    // Line one.
+    let sx = 1, sy = 1, ls = -0.01, rot = 0, tx = 0, ty = 0, op = 1, pop = 1, gap = 1;
+    if (p < 0.28) { /* at rest */ }
+    else if (p < 0.52) {
+      const u = (p - 0.28) / 0.24, e = easeInOutCubic(u);
+      sx = 1 - 0.92 * e; sy = 1 + 0.3 * e; ls = -0.01 - 0.31 * e; gap = 1 - 0.55 * e;
+      rot = 5 * Math.sin(u * Math.PI * 3) * (1 - 0.5 * e);
+    } else if (p < 0.56) {
+      const u = (p - 0.52) / 0.04;
+      sx = 0.08; sy = 1.3; ls = -0.32; gap = 0.45; pop = 1 + 0.3 * Math.sin(u * Math.PI);
+    } else if (p < 0.66) {
+      const u = (p - 0.56) / 0.10, e = easeInQuad(u);
+      sx = 0.08; sy = 1.3; ls = -0.32; gap = 0.45;
+      tx = -140 * e; ty = -7 * Math.sin(u * Math.PI); rot = -14 * u;
+      op = u > 0.8 ? 1 - (u - 0.8) / 0.2 : 1;
+    } else { op = 0; }
+    set(a, '--sx', sx.toFixed(4)); set(a, '--sy', sy.toFixed(4)); set(a, '--ls', ls.toFixed(3) + 'em');
+    set(a, '--rot', rot.toFixed(2) + 'deg'); set(a, '--tx', tx.toFixed(2) + 'vw'); set(a, '--ty', ty.toFixed(2) + 'vh');
+    set(a, '--op', op.toFixed(3)); set(a, '--pop', pop.toFixed(4)); set(a, '--gap', gap.toFixed(3));
+    a.style.visibility = op > 0.001 ? 'visible' : 'hidden';
+
+    // Line two, word by word.
+    const on = p > 0.64;
+    b.style.visibility = on ? 'visible' : 'hidden';
+    words.forEach((w, k) => {
+      const start = 0.64 + k * 0.035, u = clamp01((p - start) / 0.18);
+      if (!on || u <= 0) { w.style.transform = 'translate(30vw, 40vh) rotate(18deg) scale(1.5, .7)'; w.style.opacity = '0'; return; }
+      // Travel without overshoot so words never cross the line above; the bounce lives in the scale.
+      const m = 1 - easeOutCubic(u), b = 1 - easeOutBack(u);
+      w.style.transform = `translate(${(30 * m).toFixed(2)}vw, ${(40 * m).toFixed(2)}vh) rotate(${(18 * m).toFixed(2)}deg) scale(${(1 + 0.5 * b).toFixed(3)}, ${(1 - 0.3 * b).toFixed(3)})`;
+      w.style.opacity = Math.min(1, u * 4).toFixed(3);
     });
   }
 

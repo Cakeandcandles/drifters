@@ -38,15 +38,17 @@
     </div>
   </section>
 
-  <section class="breath grainy" aria-label="Feelin Good Feels Good">
-    <img class="tagline rise" src="./media/tagline.svg" width="720" height="512" alt="Feelin Good Feels Good" loading="lazy" decoding="async">
-    <figure class="print rise" aria-label="A postcard">
-      <div class="postcard">
-        <img src="./media/roll/27-alpine-lake.webp" width="720" height="540" alt="A deep blue alpine lake below snow-patched granite peaks" loading="lazy" decoding="async">
+  <section class="scene announce grainy" style="--hold:2.1" aria-label="Announcement">
+    <div class="stage">
+      <div class="announce-box">
+        <p class="msg msg-a"><span class="t">Stay tuned for January 2027</span></p>
+        <p class="msg msg-b"><span class="t"><span class="w">Drifters</span> <span class="w">platform</span> <span class="w">and</span> <span class="w">website</span> <span class="w">launching</span></span></p>
       </div>
-    </figure>
+    </div>
+    <div class="announce-tail" aria-hidden="true"></div>
   </section>
 
+  
   <section class="scene tapes" style="--hold:3.2" aria-label="Three tapes">
     <div class="stage">
       <div class="tape-layer is-on" style="--pos:50% 50%">
@@ -137,18 +139,16 @@
     </div>
   </section>
 
-  <section class="scene closing" style="--hold:3" aria-label="Something special is coming">
-    <div class="stage">
-      <img class="closing-photo" src="./media/roll/18-five-sunset.webp" width="720" height="960" alt="Five friends arm in arm at the lookout at sunset" loading="lazy" decoding="async">
-      <div class="sheet" aria-hidden="true"></div>
-      <div class="messages">
-        <p class="msg msg-1"><span class="t">Something special is&nbsp;coming</span></p>
-        <p class="msg msg-2"><span class="t">Drifters&nbsp;&amp;&nbsp;Co. website and platform launches January&nbsp;2027</span></p>
-        <p class="msg msg-3"><span class="t">STAY TUNED</span></p>
+  <section class="breath grainy" aria-label="Feelin Good Feels Good">
+    <img class="tagline rise" src="./media/tagline.svg" width="720" height="512" alt="Feelin Good Feels Good" loading="lazy" decoding="async">
+    <figure class="print rise" aria-label="A postcard">
+      <div class="postcard">
+        <img src="./media/roll/27-alpine-lake.webp" width="720" height="540" alt="A deep blue alpine lake below snow-patched granite peaks" loading="lazy" decoding="async">
       </div>
-    </div>
+    </figure>
   </section>
 
+  
   <section class="trailer grainy" aria-label="This summer, on tape">
     <!-- collage:trailer -->
     <div class="collage" aria-hidden="true">
@@ -174,6 +174,17 @@
   <img src="./media/wordmark.svg" width="720" height="708" alt="Drifters &amp; Co." loading="lazy" decoding="async">
   <p>&copy; 2026 Drifters &amp; Co.</p>
 </footer>
+
+<div class="trail" aria-hidden="true">
+  <svg viewBox="0 0 22 150" width="22" height="150">
+    <line class="trail-route" x1="11" y1="6" x2="11" y2="144" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.1 7" opacity=".75"/>
+    <g class="trail-pin-g"><g class="trail-pin">
+      <path d="M11 3.5c-4.4 0-7.5 3.4-7.5 7.6 0 5.6 7.5 13.4 7.5 13.4s7.5-7.8 7.5-13.4c0-4.2-3.1-7.6-7.5-7.6z" fill="#0f2a1d" transform="translate(1.2 1.6)"/>
+      <path d="M11 3.5c-4.4 0-7.5 3.4-7.5 7.6 0 5.6 7.5 13.4 7.5 13.4s7.5-7.8 7.5-13.4c0-4.2-3.1-7.6-7.5-7.6z" fill="currentColor"/>
+      <circle cx="11" cy="11" r="3" fill="#0f2a1d"/>
+    </g></g>
+  </svg>
+</div>
 
 <dialog class="window" aria-labelledby="window-title">
   <figure class="window-figure">

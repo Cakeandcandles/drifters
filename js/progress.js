@@ -5,6 +5,7 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export function createEngine({ smooth = 0.2 } = {}) {
   const scenes = [];
+  const listeners = [];
   let raf = 0;
 
   const io = new IntersectionObserver((entries) => {
@@ -34,6 +35,7 @@ export function createEngine({ smooth = 0.2 } = {}) {
       if (!s.near) continue;
       const r = s.el.getBoundingClientRect();
       const range = r.height - s.stageH;
+      s.top = r.top;
       s.target = range > 1 ? clamp01(-r.top / range) : 0;
     }
     // Write phase: transforms and opacity only, inside each scene's update.
@@ -48,6 +50,9 @@ export function createEngine({ smooth = 0.2 } = {}) {
       s.update(s.p);
       busy = true;
     }
+    // The scene whose stage is pinned right now (its top has passed and it has not released).
+    const pinned = scenes.find((s) => s.near && s.top <= 0.5 && s.target > 0 && s.target < 0.999) || null;
+    for (const fn of listeners) fn(pinned, pinned ? pinned.p : 0, busy);
     if (busy) raf = requestAnimationFrame(tick);
   }
 
@@ -67,5 +72,6 @@ export function createEngine({ smooth = 0.2 } = {}) {
     },
     kick,
     measure,
+    onUpdate(fn) { listeners.push(fn); },
   };
 }

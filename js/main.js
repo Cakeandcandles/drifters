@@ -1,5 +1,6 @@
 import { createEngine } from './progress.js';
-import { opening, tapes, closing } from './scenes.js';
+import { opening, tapes, announce } from './scenes.js';
+import { initIndicator } from './indicator.js';
 import { createVideoManager } from './video.js';
 import { initReel } from './reel.js';
 import { initLightbox } from './lightbox.js';
@@ -18,7 +19,8 @@ if (!reduced) {
   const tapeSection = document.querySelector('.tapes');
   tapes(tapeSection, engine, videos);
   tapeSection.querySelectorAll('video').forEach((v) => driven.add(v));
-  closing(document.querySelector('.closing'), engine);
+  announce(document.querySelector('.announce'), engine);
+  initIndicator(engine);
   engine.measure();
   engine.kick();
 }

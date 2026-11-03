@@ -88,7 +88,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   display: grid; justify-items: center; gap: 10px;
   color: var(--ground);
   text-align: center;
-  pointer-events: none;
 }
 .js .opening.is-live .masthead {
   position: fixed;
@@ -163,7 +162,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 /* ---------- Scene C: a breath ---------- */
 .breath {
   position: relative;
-  padding: 16svh var(--m) 12svh;
+  padding: 18svh var(--m) 14svh;
   background-color: var(--ground);
   overflow: clip;
 }
@@ -338,63 +337,64 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .fr img { width: 100%; height: 100%; object-fit: cover; }
 .fr button:active img { opacity: .85; }
 
-/* ---------- Scene F: the closing announcement ---------- */
-.closing .stage { background: var(--ground); }
-.closing-photo {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; object-position: 50% 22%;
+/* ---------- The announcement: a goofy title card that holds the page ---------- */
+.announce { background-color: var(--ground); overflow: clip; }
+.announce .stage { display: grid; align-items: center; }
+.announce-tail { height: 24svh; }
+.announce-box {
+  padding: 0 max(var(--m), env(safe-area-inset-right)) 0 max(var(--m), env(safe-area-inset-left));
+  display: grid;
 }
-.sheet {
-  position: absolute; left: -12%; right: -12%; bottom: -30%; height: 80%;
-  background: var(--ground) url('./media/grain-soft.png') repeat;
-  background-size: 256px 256px;
-  transform: translateY(var(--sy, 0%)) rotate(var(--sr, 0deg));
-  transform-origin: 50% 100%;
+.announce .msg {
+  grid-area: 1 / 1;
+  margin: 0;
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(2.4rem, 11.5vw, 7.5rem);
+  line-height: .95; letter-spacing: -.01em;
+  color: var(--ink);
+}
+.announce .msg-b { font-size: clamp(2.2rem, 10.5vw, 7rem); }
+.announce .msg .t { display: block; }
+.msg-a .t {
+  transform-origin: 0% 50%;
+  transform: translate(var(--tx, 0vw), var(--ty, 0vh)) rotate(var(--rot, 0deg)) scale(calc(var(--sx, 1) * var(--pop, 1)), calc(var(--sy, 1) * var(--pop, 1)));
+  letter-spacing: var(--ls, -.01em);
+  line-height: calc(.95 * var(--gap, 1));
+  opacity: var(--op, 1);
   will-change: transform;
 }
-.messages {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
-  overflow: hidden;
-  transform: translateY(var(--sy, 0%));
-}
-.msg {
-  position: absolute; inset: 0;
-  display: flex; align-items: center;
-  margin: 0;
-  padding: 0 max(var(--m), env(safe-area-inset-right)) 0 max(var(--m), env(safe-area-inset-left));
-  transform: translateY(var(--my, 0%));
-  opacity: var(--mo, 1);
-  will-change: transform, opacity;
-}
-.msg .t { display: block; text-wrap: balance; }
-.msg-1 .t {
-  font-family: var(--font-display); font-weight: 400;
-  font-size: clamp(2.5rem, 12.5vw, 7rem);
-  line-height: .95; letter-spacing: -.01em;
-}
-.msg-2 .t {
-  font-weight: 760; font-stretch: 112%;
-  font-size: clamp(1.6rem, 7.4vw, 4rem);
-  line-height: 1.0; letter-spacing: -.025em;
-  max-width: 23ch;
-}
-.msg-3 .t {
-  font-family: var(--font-display); font-weight: 400;
-  font-size: clamp(3.6rem, 19vw, 11rem);
-  line-height: .9; letter-spacing: -.01em;
-}
+.msg-b .w { display: inline-block; transform-origin: 50% 100%; }
+.js .announce.is-live .msg-b .w { will-change: transform; }
+.js .announce.is-live .msg-b { visibility: hidden; }
 @media (min-aspect-ratio: 4/5) {
-  .closing-photo { object-position: 50% 60%; }
-  .msg-1 .t { font-size: clamp(3rem, 8vw, 7rem); }
-  .msg-2 .t { font-size: clamp(2rem, 4.4vw, 4rem); max-width: 30ch; }
-  .msg-3 .t { font-size: clamp(5rem, 14vw, 12rem); }
+  .announce .msg { font-size: clamp(3rem, 8vw, 7.5rem); }
+  .announce .msg-b { font-size: clamp(2.8rem, 7vw, 7rem); }
+  .announce .msg .t { max-width: 16ch; }
 }
-/* Rest: photograph above, the green half with the three messages stacked. */
-.closing:not(.is-live) .stage { position: static; height: auto; overflow: visible; }
-.closing:not(.is-live) .closing-photo { position: relative; height: 50svh; }
-.closing:not(.is-live) .sheet { display: none; }
-.closing:not(.is-live) .messages { position: relative; height: auto; transform: none; padding: 10svh 0 6svh; display: grid; gap: 7svh; }
-.closing:not(.is-live) .msg { position: relative; inset: auto; transform: none; opacity: 1; }
+/* Rest: both lines stacked, nothing moves. */
+.announce:not(.is-live) .stage { position: static; height: auto; overflow: visible; display: block; padding: 18svh 0 12svh; }
+.announce:not(.is-live) .announce-box { gap: 7svh; }
+.announce:not(.is-live) .msg { grid-area: auto; }
+.announce:not(.is-live) .announce-tail { height: 0; }
+
+/* ---------- The scroll indicator: a pin on a dashed trail, only during holds ---------- */
+.trail {
+  position: fixed; z-index: 30;
+  right: max(12px, env(safe-area-inset-right)); top: 50%;
+  width: 22px; height: 150px;
+  transform: translateY(-50%);
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity .35s var(--ease-out);
+  pointer-events: none;
+}
+.trail.is-on { opacity: 1; }
+.trail svg { width: 100%; height: 100%; overflow: visible; }
+.trail-pin { transition: transform .12s var(--ease-out); transform-origin: 11px 11px; }
+.trail.moving .trail-pin { transform: scale(.92, 1.08); }
+.trail.hop .trail-pin-g { animation: trail-hop .5s var(--ease-out) 2; }
+@keyframes trail-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9px); } }
+@media (min-aspect-ratio: 4/5) { .trail { width: 26px; height: 190px; right: max(18px, env(safe-area-inset-right)); } }
 
 /* ---------- The trailer ---------- */
 .trailer {

@@ -53,10 +53,10 @@ const st = await state();
 const stops = [];
 const sc = (name, f) => { const s = st.scenes[name]; return Math.round(s.top + f * s.range); };
 stops.push(['A-p0', 0], ['B-p25', sc('opening', .25)], ['B-p50', sc('opening', .5)], ['B-p75', sc('opening', .75)], ['B-p100', sc('opening', 1)]);
-stops.push(['C-breath', st.breath.top + Math.round(st.breath.height / 2 - st.vh / 2)]);
+for (const f of [0, .2, .35, .45, .53, .58, .62, .7, .8, .95, 1]) stops.push([`N-p${Math.round(f * 100)}`, sc('announce', f)]);
 for (const f of [0, .3, .34, .38, .42, .5, .72, .76, .8, .86, 1]) stops.push([`D-p${Math.round(f * 100)}`, sc('tapes', f)]);
 stops.push(['E-reel', st.reel.top + Math.round(st.reel.height / 2 - st.vh / 2)]);
-for (const f of [0, .1, .22, .3, .4, .5, .6, .7, .85, 1]) stops.push([`F-p${Math.round(f * 100)}`, sc('closing', f)]);
+stops.push(['F-breath', st.breath.top + Math.round(st.breath.height / 2 - st.vh / 2)]);
 stops.push(['G-trailer', st.trailer.top - Math.round((st.vh - st.trailer.height) / 2)], ['H-footer', st.docH - st.vh]);
 
 const report = [`url ${url}  viewport ${W}x${H}@${dsf} mobile=${mobile} reduced=${has('reduced')} noautoplay=${has('noautoplay')}`, `doc ${st.docW}x${st.docH} vh=${st.vh} horizontal-overflow=${st.docW > W}`, JSON.stringify(st.scenes)];
@@ -64,11 +64,12 @@ async function shoot(label, y) {
   await p.eval((y) => scrollTo(0, y), y);
   await sleep(700);
   await p.screenshot({ path: join(out, label + '.jpg'), quality: 70 });
-  report.push(`${label.padEnd(10)} y=${String(y).padStart(6)}  ${await videos()}`);
+  const trail = await p.eval(() => { const t = document.querySelector('.trail'); if (!t) return 'none'; return t.classList.contains('is-on') ? 'trail:on ' + (t.querySelector('.trail-pin-g')?.getAttribute('transform') || '') : 'trail:off'; });
+  report.push(`${label.padEnd(10)} y=${String(y).padStart(6)}  ${trail.padEnd(26)} ${await videos()}`);
 }
 for (const [label, y] of stops) await shoot(label, y);
 // Reverse pass through the tapes and the opening.
-for (const [label, y] of [['R-F-p50', sc('closing', .5)], ['R-F-p10', sc('closing', .1)], ['R-D-p80', sc('tapes', .8)], ['R-D-p38', sc('tapes', .38)], ['R-D-p0', sc('tapes', 0)], ['R-B-p50', sc('opening', .5)], ['R-A-p0', 0]]) await shoot(label, y);
+for (const [label, y] of [['R-D-p80', sc('tapes', .8)], ['R-D-p38', sc('tapes', .38)], ['R-D-p0', sc('tapes', 0)], ['R-N-p70', sc('announce', .7)], ['R-N-p45', sc('announce', .45)], ['R-N-p10', sc('announce', .1)], ['R-B-p50', sc('opening', .5)], ['R-A-p0', 0]]) await shoot(label, y);
 
 // Reel interaction: drag the strip, then open a portrait and a landscape frame.
 await p.eval((y) => scrollTo(0, y), st.reel.top + Math.round(st.reel.height / 2 - st.vh / 2));
